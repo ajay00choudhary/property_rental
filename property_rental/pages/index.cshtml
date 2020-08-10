@@ -1,0 +1,259 @@
+﻿@page
+@{}
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>PROPERTY</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body style="background-size: cover">
+
+    <div>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-warning">
+             <a href="https://www.barfoot.co.nz/html/default.asp"> Property</a>
+            
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarText">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <button class="btn btn-outline-dark" data-toggle="modal" data-target="#addproperty">Add New property</button>
+                    </li>
+
+                </ul>
+
+            </div>
+        </nav>
+
+
+        <div class="container">
+            <div class="row" id="property">
+            </div>
+
+        </div>
+    </div>
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script>
+        var uri = 'api/propery_details';
+        $(document).ready(function () {
+            // Gets all property
+            $.getJSON(uri)
+                .done(function (data) {
+                    $("#propertyTemplate").tmpl(data).appendTo("#property");
+                });
+        });
+        function getAllproperty() {
+            $.getJSON(uri)
+                .done(function (data) {
+                    $("#property").text("");
+                    $("#propertyTemplate").tmpl(data).appendTo("#property");
+                });
+        }
+        //we can add property here
+        function addproperty() {
+            var _property_name = $('#property_name').val();
+            var _property_type = $('#property_type').val();
+            var _property_address = $('#property_address').val();
+            var _property_value = parseFloat($('#property_value').val());
+            var property = {
+                property_name: _property_name,
+                property_type: _property_type,
+                property_address: _property_address,
+                property_value: _property_value
+            };
+            $.ajax({
+                type: "POST",
+                url: uri,
+                data: JSON.stringify(property),
+                contentType: "application/json; charset=utf-8"
+            }).done(function (response) {
+                $("#result").html("Success");
+                getAllproperty();
+            }).fail(function (jqXHR, textStatus) {
+                $("#result").html("An error occured when Adding the property record.");
+            });
+        }
+        //here we can update property
+        function updateproperty() {
+            var property_name1 = $('#_property_name').val();
+            var property_type1 = $('#_property_type').val();
+            var property_address1 = $('#_property_address').val();
+            var property_value1 = parseFloat($('#_property_value').val());
+
+            var property = {
+                property_id: parseInt($('#_id').val()),
+                property_name: property_name1,
+                property_type: property_type1,
+                property_address: property_address1,
+                property_value: property_value1
+            };
+            $.ajax({
+                type: "PUT",
+                url: uri + "/" + $('#_id').val(),
+                data: JSON.stringify(property),
+                contentType: "application/json; charset=utf-8"
+            }).done(function (response) {
+                $("#resultUpdate").html("Success");
+                getAllproperty();
+            }).fail(function (jqXHR, textStatus) {
+                $("#resultUpdate").html("An error occured When updating property");
+            });;
+        }
+        //we can removethe property by this function
+        function remove(id) {
+            var yes = confirm("Are you sure you want to delete this property?");
+            if (yes) {
+                $.ajax({
+                    type: "DELETE",
+                    url: uri + "/" + id,
+                }).done(function (response) {
+                    getAllproperty();
+                });
+            }
+        }
+        function getpropertyForUpdate(id) {
+            $.ajax({
+                type: "GET",
+                url: uri + "/" + id,
+                contentType: "application/json"
+            }).done(function (response) {
+                $('#_id').val(response.property_id);
+                $('#_property_name').val(response.property_name);
+                $('#_property_type').val(response.property_type);
+                $('#_property_address').val(response.property_address);
+                $('#_property_value').val(response.property_value);
+            });
+        }
+    </script>
+
+
+
+    <script id="propertyTemplate" type="text/x-jquery-tmpl">
+        <div class="col-lg-3" style="margin:10px;">
+            <div class="card card text-white bg-dark border-warning mb-3" style="width: 18rem; padding:20px">
+                <div class="card-body">
+                    <h5 class="card-title">property_name: ${property_name}</h5>
+                    <p class="card-title">property_type: ${property_type}</p>
+                    <p class="card-text">property_address :  ${property_address}</p>
+                    <p class="card-text">property_value : ${property_value}</p>
+                </div>
+                <span>
+                    <button class="btn btn-primary" onclick="getpropertyForUpdate('${property_id}')" data-toggle="modal" data-target="#updateproperty">Update</button>
+                    <a href="#" class="btn btn-danger" onclick="remove('${property_id}')">Delete</a>
+                </span>
+            </div>
+        </div>
+    </script>
+
+
+
+    <div class="modal" tabindex="-1" role="dialog" id="addproperty">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add property</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="model">property_name</label>
+                            <input type="text" class="form-control" id="property_name" aria-describedby="NameHelp" placeholder=" Name">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">property_type</label>
+                            <input type="text" class="form-control" id="property_type" aria-describedby="typeHelp" placeholder="type Name">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">property_address</label>
+                            <input type="text" class="form-control" id="property_address" aria-describedby="locationHelp" placeholder="location Name">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">property_value</label>
+                            <input type="number" class="form-control" id="property_value" aria-describedby="PriceHelp" placeholder="property Price">
+
+                        </div>
+
+
+                        <div class="form-group" id="result">
+
+
+                        </div>
+                        <button type="button" onclick="addproperty()" class="btn btn-primary">Add property</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <div class="modal" tabindex="-1" role="dialog" id="updateproperty">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update property</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+
+                        <div class="form-group">
+
+                            <input type="hidden" class="form-control" id="_id" aria-describedby="emailHelp">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">property_name</label>
+                            <input type="text" class="form-control" id="_property_name" aria-describedby="NameHelp" placeholder=" Name">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">property_type</label>
+                            <input type="text" class="form-control" id="_property_type" aria-describedby="typeHelp" placeholder="type Name">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">property_address</label>
+                            <input type="text" class="form-control" id="_property_address" aria-describedby="locationHelp" placeholder="location Name">
+
+                        </div>
+                        <div class="form-group">
+                            <label for="model">property_value</label>
+                            <input type="number" class="form-control" id="_property_value" aria-describedby="PriceHelp" placeholder="property Price">
+
+                        </div>
+
+
+                        <div class="form-group" id="resultUpdate">
+
+
+                        </div>
+                        <button type="button" onclick="updateproperty()" class="btn btn-primary">Update Record</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
